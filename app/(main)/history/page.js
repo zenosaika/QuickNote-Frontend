@@ -45,54 +45,54 @@ export default function HistoryPage() {
     }
   }, [user, authLoading, router]);
 
-  const fetchHistory = async () => {
-    if (authLoading || !user) {
-       setIsLoading(false);
-       return;
-    }
-
-    setIsLoading(true);
-    setError('');
-    try {
-      const response = await fetch('/api/history', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        let errorMsg = `Failed to fetch history (Status: ${response.status})`;
-        if (response.status === 401) {
-          errorMsg = "Authentication error. Please log in again.";
-        } else {
-          try {
-            const errorData = await response.json();
-            errorMsg = errorData.detail || errorData.message || errorMsg;
-          } catch (_) {}
-        }
-        throw new Error(errorMsg);
-      }
-
-      const data = await response.json();
-      console.log("Fetched History:", data);
-      setHistory(Array.isArray(data) ? data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : []);
-
-    } catch (err) {
-      console.error('Error fetching history:', err);
-      setError(err.message || 'An unexpected error occurred while fetching history.');
-      setHistory([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!authLoading && user) {
+      const fetchHistory = async () => {
+        if (authLoading || !user) {
+          setIsLoading(false);
+          return;
+        }
+
+        setIsLoading(true);
+        setError('');
+        try {
+          const response = await fetch('/api/history', {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+            }
+          });
+
+          if (!response.ok) {
+            let errorMsg = `Failed to fetch history (Status: ${response.status})`;
+            if (response.status === 401) {
+              errorMsg = "Authentication error. Please log in again.";
+            } else {
+              try {
+                const errorData = await response.json();
+                errorMsg = errorData.detail || errorData.message || errorMsg;
+              } catch (_) {}
+            }
+            throw new Error(errorMsg);
+          }
+
+          const data = await response.json();
+          console.log("Fetched History:", data);
+          setHistory(Array.isArray(data) ? data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)) : []);
+
+        } catch (err) {
+          console.error('Error fetching history:', err);
+          setError(err.message || 'An unexpected error occurred while fetching history.');
+          setHistory([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
       fetchHistory();
     }
-  }, [user, authLoading, fetchHistory]);
+  }, [user, authLoading]);
 
   const handleDelete = async (id, filename) => {
     if (!confirm(`Are you sure you want to delete the transcription for "${filename || 'this item'}"? This action cannot be undone.`)) {
