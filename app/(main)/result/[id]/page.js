@@ -76,6 +76,11 @@ export default function ResultPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [exportErrorPDF, setExportErrorPDF] = useState('');
+  const [isExportingDOCX, setIsExportingDOCX] = useState(false);
+  const [exportErrorDOCX, setExportErrorDOCX] = useState('');
+
   useEffect(() => {
     if (!authLoading && !user) {
       console.log("Result Page: User not authenticated, redirecting to login.");
@@ -150,6 +155,88 @@ export default function ResultPage() {
 
   }, [id, user, authLoading]);
 
+
+  const handleExport = async (format) => {
+        if (!id || !resultData || !resultData.summarized_text || resultData.summarized_text.trim() === '') {
+            console.warn("Export attempted but no ID or summary data available.");
+            const setExportError = format === 'pdf' ? setExportErrorPDF : setExportErrorDOCX;
+            setExportError(`Cannot export: No summary available for this transcription.`);
+            return;
+        }
+
+        const endpoint = `/api/transcription/${id}/export/${format}`; // e.g., /api/transcription/123/export/pdf
+        const setExporting = format === 'pdf' ? setIsExportingPDF : setIsExportingDOCX;
+        const setExportError = format === 'pdf' ? setExportErrorPDF : setExportErrorDOCX;
+
+        setExporting(true);
+        setExportError('');
+
+        try {
+            console.log(`Attempting to export ${format} for ID: ${id}`);
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': format === 'pdf'
+                                ? 'application/pdf'
+                                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                },
+            });
+
+            if (!response.ok) {
+                let errorMsg = `Error exporting as ${format.toUpperCase()} (Status: ${response.status})`;
+                if (response.status === 401) { errorMsg = "Authentication failed. Please log in."; }
+                else if (response.status === 403) { errorMsg = "Access denied. You don't have permission to export this."; }
+                else if (response.status === 404) { errorMsg = `${format.toUpperCase()} export failed: Transcription not found or no summary available.`; }
+                else {
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.detail || errorMsg;
+                    } catch (jsonError) {
+                        console.warn(`Could not parse JSON error from ${format} export response`, jsonError);
+                    }
+                }
+                console.error(`Export failed for ID ${id}, format ${format}: ${errorMsg}`);
+                throw new Error(errorMsg);
+            }
+
+            const blob = await response.blob();
+
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `${resultData?.filename || 'transcription'}_summary.${format}`; // Fallback filename
+
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1];
+                } else {
+                    console.warn(`Content-Disposition header found but filename not in expected format for ${format} export.`);
+                }
+            } else {
+                console.warn(`Content-Disposition header missing from ${format} export response. Using fallback filename: ${filename}`);
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            console.log(`Successfully initiated download for ID ${id}, format ${format}.`);
+
+        } catch (err) {
+            console.error(`Result Page: Error during ${format.toUpperCase()} export for ID ${id}:`, err);
+            setExportError(err.message || `An unexpected error occurred during ${format.toUpperCase()} export.`);
+        } finally {
+            setExporting(false);
+        }
+    };
+
+
   if (isLoading || authLoading) {
       return (
           <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -201,6 +288,8 @@ export default function ResultPage() {
   const transcriptionSegments = resultData.result?.transcriptions ?? [];
   const summaryText = resultData.summarized_text ?? null;
 
+  const showExportButtons = summaryText && typeof summaryText === 'string' && summaryText.trim() !== ''
+
   return (
     <div className="space-y-10 pb-20 px-4 md:px-8 lg:px-12 max-w-7xl mx-auto">
 
@@ -222,7 +311,37 @@ export default function ResultPage() {
                 Status: <span className="font-medium text-cyan-300 capitalize">{resultData.status || 'N/A'}</span>
              </span>
          </div>
-      </div>
+
+        {showExportButtons && (
+             <div className="mt-6 flex flex-wrap gap-3">
+                 <button
+                     onClick={() => handleExport('pdf')}
+                     disabled={isExportingPDF || isExportingDOCX}
+                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                 >
+                    {isExportingPDF ? <Spinner className="w-4 h-4 mr-2 text-white" /> :
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l3-3m-3 3l-3-3m2.804-9.44l7.11 7.11c.622.622.622 1.636 0 2.258L12 16.804l-7.11-7.11c-.622-.622-.622-1.636 0-2.258l7.11-7.11a1.5 1.5 0 012.258 0z"/></svg>}
+                    Export PDF
+                 </button>
+                  <button
+                     onClick={() => handleExport('docx')}
+                     disabled={isExportingDOCX || isExportingPDF}
+                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-700 bg-blue-200 hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                 >
+                    {isExportingDOCX ? <Spinner className="w-4 h-4 mr-2 text-gray-700" /> :
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l3-3m-3 3l-3-3m2.804-9.44l7.11 7.11c.622.622.622 1.636 0 2.258L12 16.804l-7.11-7.11c-.622-.622-.622-1.636 0-2.258l7.11-7.11a1.5 1.5 0 012.258 0z"/></svg>}
+                    Export DOCX
+                 </button>
+             </div>
+         )}
+
+         {(exportErrorPDF || exportErrorDOCX) && (
+             <div className="mt-4 text-sm text-red-400 p-3 bg-red-900/50 border border-red-700 rounded-md">
+                 <p>{exportErrorPDF || exportErrorDOCX}</p>
+             </div>
+         )}
+
+      </div> 
 
       <div className="w-full bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-2xl p-6 md:p-8 border border-blue-900/50">
          <h2 className="text-2xl font-semibold text-white mb-5 border-b border-blue-800/70 pb-3">
