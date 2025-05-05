@@ -92,7 +92,7 @@ export default function HistoryPage() {
     if (!authLoading && user) {
       fetchHistory();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchHistory]);
 
   const handleDelete = async (id, filename) => {
     if (!confirm(`Are you sure you want to delete the transcription for "${filename || 'this item'}"? This action cannot be undone.`)) {

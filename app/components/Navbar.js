@@ -1,32 +1,30 @@
-// app/components/Navbar.js (Modified)
 "use client";
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext'; // Import useAuth hook
-import { useRouter } from 'next/navigation'; // To redirect after logout
+import { useAuth } from '../context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, logout } = useAuth(); // Get user state and logout function
+  const { user, logout } = useAuth();
   const router = useRouter();
 
-  const isLoggedIn = !!user; // Check if user object exists
+  const isLoggedIn = !!user;
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   const handleLogout = async () => {
     console.log("Navbar: handleLogout called.");
     try {
-      await logout(); // Wait for local state update and backend call attempt
+      await logout();
       console.log("Navbar: Context logout() promise resolved.");
     } catch (error) {
       console.error("Navbar: Error occurred during context logout call:", error);
     } finally {
-      // Run this after await logout() finishes
       setIsMobileMenuOpen(false);
       console.log("Navbar: Pushing to /");
-      router.push('/'); // Redirect after attempting logout
+      router.push('/');
     }
   };
 
@@ -34,14 +32,12 @@ const Navbar = () => {
     <nav className="bg-gray-900/80 backdrop-blur-sm shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo/Brand Name */}
           <div className="flex-shrink-0">
             <Link href={isLoggedIn ? "/transcribe" : "/"} className="text-2xl font-bold text-white hover:text-blue-400 transition-colors">
               QuickNote
             </Link>
           </div>
 
-          {/* Desktop Menu */}
           <div className="hidden md:flex md:items-center md:space-x-6">
             {isLoggedIn ? (
               <>
@@ -52,7 +48,7 @@ const Navbar = () => {
                   History
                 </Link>
                 <button
-                  onClick={handleLogout} // Use handleLogout
+                  onClick={handleLogout}
                   className="text-gray-300 hover:bg-pink-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors bg-pink-600"
                 >
                   Logout
@@ -70,9 +66,7 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
-             {/* Show Login/Register or menu button */}
              {!isLoggedIn && (
                  <div className="flex items-center space-x-2 mr-2">
                     <Link href="/login" className="text-gray-300 hover:text-white px-2 py-1 rounded-md text-sm font-medium transition-colors">Login</Link>
@@ -88,7 +82,6 @@ const Navbar = () => {
                   aria-expanded={isMobileMenuOpen}
                  >
                    <span className="sr-only">Open main menu</span>
-                   {/* Icon burger/close */}
                    <svg className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
                    </svg>
@@ -101,14 +94,13 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu, show/hide based on menu state (Only if logged in) */}
      {isLoggedIn && (
        <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden transition-all duration-300 ease-out border-t border-gray-700`} id="mobile-menu">
          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
            <Link href="/transcribe" onClick={()=>setIsMobileMenuOpen(false)} className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors">Transcribe</Link>
            <Link href="/history" onClick={()=>setIsMobileMenuOpen(false)} className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors">History</Link>
            <button
-             onClick={handleLogout} // Use handleLogout
+             onClick={handleLogout}
              className="w-full text-left text-gray-300 hover:bg-pink-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors bg-pink-600 mt-2"
             >
              Logout
