@@ -5,7 +5,8 @@ const nextConfig = {
       return [
         {
           source: '/api/:path*', // Match any path starting with /api/
-          destination: 'http://localhost:8000/api/:path*', // Proxy to FastAPI backend
+          destination: 'https://quicknote-api.fly.dev/api/:path*', // Proxy to FastAPI backend
+          // destination: 'http://localhost:8000/api/:path*', // Proxy to FastAPI backend
         },
       ];
     },
