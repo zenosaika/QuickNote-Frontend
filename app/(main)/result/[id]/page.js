@@ -379,23 +379,12 @@ export default function ResultPage() {
                    const speakerId = isValidSegment ? segment.speaker_id : 'UNKNOWN';
                    const speakerColor = getSpeakerColor(speakerId);
                    const formatTime = (time) => typeof time === 'number' ? time.toFixed(2) : (time || '??.??');
-                   const startTimeStr = formatTime(isValidSegment ? segment.start_time : null);
-                   const endTimeStr = formatTime(isValidSegment ? segment.end_time : null);
-                   const transcriptText = isValidSegment ? (segment.transcript || '') : '(Invalid segment data)';
+                   const startTimeStr = formatTime(isValidSegment ? segment.start_timestamp : null);
+                   const endTimeStr = formatTime(isValidSegment ? segment.end_timestamp : null);
+                   const transcriptText = isValidSegment ? (segment.text_transcript || '') : '(Invalid segment data)';
 
-                   let speakerLabel = 'Unknown';
-                   if (speakerId !== 'UNKNOWN') {
-                        if (typeof speakerId === 'number') {
-                            speakerLabel = `Speaker ${speakerId}`;
-                        } else if (typeof speakerId === 'string') {
-                            const match = speakerId.match(/\d+/);
-                            if (match) {
-                                speakerLabel = `Speaker ${match[0]}`;
-                            } else if (!speakerId.toLowerCase().includes('unknown')) {
-                                speakerLabel = `ID: ${speakerId}`;
-                            }
-                        }
-                   }
+                   let speakerLabel = `Speaker ${speakerId}`;
+
 
                   return (
                     <div key={index} className="flex flex-col sm:flex-row sm:items-start gap-x-4 gap-y-2 border-b border-blue-800/50 pb-4 last:border-b-0">

@@ -253,25 +253,16 @@ export default function TranscribePage() {
           <div className="bg-gray-900/50 p-4 border border-blue-800/60 rounded-lg max-h-[70vh] overflow-y-auto space-y-5 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800/50">
             {transcription.map((segment, index) => {
               const speakerColor = getSpeakerColor(segment.speaker_id);
-              const startTimeStr = segment.start_time || '??:??';
-              const endTimeStr = segment.end_time || '??:??';
-              let speakerLabel = 'Unknown Speaker';
-              if (segment.speaker_id !== undefined && segment.speaker_id !== null) {
-                  if (typeof segment.speaker_id === 'number') { speakerLabel = `Speaker ${segment.speaker_id}`; }
-                  else if (typeof segment.speaker_id === 'string') {
-                      const match = segment.speaker_id.match(/(\d+)$/);
-                      if (match) { speakerLabel = `Speaker ${match[1]}`; }
-                      else if (segment.speaker_id.toLowerCase().includes('unknown')) { speakerLabel = 'Unknown Speaker'; }
-                      else { speakerLabel = `Speaker ${segment.speaker_id}`; }
-                  }
-              }
+              const startTimeStr = segment.start_timestamp || '??:??';
+              const endTimeStr = segment.end_timestamp || '??:??';
+              let speakerLabel = `Speaker ${segment.speaker_id}`;
               return (
                 <div key={index} className="flex flex-col sm:flex-row sm:items-start gap-x-4 gap-y-2 border-b border-blue-800/50 pb-4 last:border-b-0">
                   <div className="flex-shrink-0 w-full sm:w-48 text-xs text-blue-200/80 flex flex-row sm:flex-col items-center sm:items-start gap-1.5 sm:pt-0.5">
                     <span className="bg-gray-700/60 px-2 py-0.5 rounded whitespace-nowrap font-mono tabular-nums"> {startTimeStr} - {endTimeStr} </span>
                     <span className={`font-semibold px-2 py-0.5 rounded ${speakerColor} bg-black/40 whitespace-nowrap`}> {speakerLabel} </span>
                   </div>
-                  <p className={`flex-grow text-base sm:text-lg leading-relaxed ${speakerColor} whitespace-pre-wrap break-words`}> {segment.transcript || <span className="italic text-gray-500">(No text transcribed)</span>} </p>
+                  <p className={`flex-grow text-base sm:text-lg leading-relaxed ${speakerColor} whitespace-pre-wrap break-words`}> {segment.text_transcript || <span className="italic text-gray-500">(No text transcribed)</span>} </p>
                 </div>
               );
             })}
